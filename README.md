@@ -20,13 +20,14 @@ DrupalHost is a Drupal Installer plugin similar to the `laravel/installer` plugi
 
 We can also install our specific version by running this command-
 
-    ```shell
-        drupalhost new blog 8.7.4       # install drupal 8.7.4 release
-    ```
+```shell
+    drupalhost new blog 8.7.4       # install drupal 8.7.4 release
+```
 
-    ```shell
-        drupalhost new blog composer    # install drupal-composer
-    ```
+```shell
+    drupalhost new blog composer    # install drupal-composer
+```
+
 **Note:** Passing `composer` as a version installs the [drupal-composer](https://github.com/drupal-composer/drupal-project) project.
 
 ## Contribute
