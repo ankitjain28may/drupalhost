@@ -1,6 +1,6 @@
 # DrupalHost
 
-DrupalHost is a Drupal Installer plugin similar to the `laravel/installer` plugin.
+DrupalHost is a Drupal Installer plugin similar to the `laravel/installer` plugin. It only supports installation for Drupal `8.*` versions.
 
 ## Installation
 
@@ -16,9 +16,20 @@ DrupalHost is a Drupal Installer plugin similar to the `laravel/installer` plugi
         drupalhost new blog
     ```
 
-**Note:** It takes the latest development branch i.e `8.x` of the [drupal-composer](https://github.com/drupal-composer/drupal-project) project.
+**Note:** It takes the latest release i.e `8.7.5` of the [Drupal Releases](https://www.drupal.org/project/drupal/releases) 
 
- ## Contribute
+We can also install our specific version by running this command-
+
+    ```shell
+        drupalhost new blog 8.7.4       # install drupal 8.7.4 release
+    ```
+
+    ```shell
+        drupalhost new blog composer    # install drupal-composer
+    ```
+**Note:** Passing `composer` as a version installs the [drupal-composer](https://github.com/drupal-composer/drupal-project) project.
+
+## Contribute
 
 >Feel free to contribute
 

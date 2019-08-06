@@ -11,6 +11,9 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7;
+use Exception;
 
 class NewCommand extends Command
 {
@@ -25,7 +28,7 @@ class NewCommand extends Command
             ->setName('new')
             ->setDescription('Create a new Drupal application')
             ->addArgument('name', InputArgument::OPTIONAL)
-            ->addOption('dev', null, InputOption::VALUE_NONE, 'Installs the latest "development" release')
+            ->addArgument('version', InputArgument::OPTIONAL, 'Installs the entered release, pass composer for drupal-composer release')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forces install even if the directory already exists');
     }
 
@@ -41,6 +44,14 @@ class NewCommand extends Command
         if (! extension_loaded('zip')) {
             throw new RuntimeException('The Zip PHP extension is not installed. Please install it and try again.');
         }
+        $version = '8.7.5';
+        if ($input->getArgument('version') && preg_match("/^8[0-9.]*$/", $input->getArgument('version'))) {
+            $version = $input->getArgument('version');
+        } else if ($input->getArgument('version') && $input->getArgument('version') == 'composer') {
+            $version = 'project-8.x';
+        } else if (!preg_match("/^[8]*$/", $input->getArgument('version'))) {
+            throw new RuntimeException('Invalid Version, valid only for Drupal 8.* versions');
+        }
 
         $directory = ($input->getArgument('name')) ? getcwd().'/'.$input->getArgument('name') : getcwd();
 
@@ -50,15 +61,15 @@ class NewCommand extends Command
 
         $output->writeln('<info>Crafting application...</info>');
 
-        $this->download($zipFile = $this->makeFilename())
+        $this->download($zipFile = $this->makeFilename(), $version)
              ->extract($zipFile, $directory)
              ->cleanUp($zipFile);
 
         $composer = $this->findComposer();
 
         $commands = [
-            'mv ' . $directory . '/drupal-project-8.x/* .',
-            'rm -rf ' . $directory . '/drupal-project-8.x',
+            'mv ' . $directory . '/drupal-' . $version . '/* .',
+            'rm -rf ' . $directory . '/drupal-' . $version,
             $composer.' run-script pre-install-cmd',
             $composer.' run-script pre-update-cmd',
             $composer.' install --no-interaction',
@@ -108,10 +119,23 @@ class NewCommand extends Command
      * @param  string  $zipFile
      * @return $this
      */
-    protected function download($zipFile)
+    protected function download($zipFile, $version)
     {
-        $url = 'https://github.com/drupal-composer/drupal-project/archive/8.x.zip';
-        $response = (new Client)->get($url);
+        $url = 'https://ftp.drupal.org/files/projects/drupal-' . $version . '.zip';
+
+        if ($version == "project-8.x") {
+            $url = 'https://github.com/drupal-composer/drupal-project/archive/8.x.zip';
+        }
+
+        try {
+            $response = (new Client)->get($url);
+        }
+        catch (RequestException $e) {
+            throw new RuntimeException(Psr7\str($e->getResponse()));
+        }
+        catch (Exception $e) {
+            throw new RuntimeException(Psr7\str($e->getResponse()));
+        }
 
         file_put_contents($zipFile, $response->getBody());
 
