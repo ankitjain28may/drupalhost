@@ -17,6 +17,24 @@ use Exception;
 
 class NewCommand extends Command
 {
+
+    /**
+     * commands to be executed
+     *
+     * @var array
+     */
+    private $commands;
+
+    /**
+     * constructor
+     *
+     * @param array $commands
+     */
+    public function __construct(array $commands) {
+        $this->commands = $commands;
+        parent::__construct();
+    }
+
     /**
      * Configure the command options.
      *
@@ -44,7 +62,7 @@ class NewCommand extends Command
         if (! extension_loaded('zip')) {
             throw new RuntimeException('The Zip PHP extension is not installed. Please install it and try again.');
         }
-        $version = '8.7.5';
+        $version = '8.8.5';
         if ($input->getArgument('version') && preg_match("/^8[0-9.]*$/", $input->getArgument('version'))) {
             $version = $input->getArgument('version');
         } else if ($input->getArgument('version') && $input->getArgument('version') == 'composer') {
@@ -66,18 +84,8 @@ class NewCommand extends Command
              ->cleanUp($zipFile);
 
         $composer = $this->findComposer();
-
-        $commands = [
-            'mv ' . $directory . '/drupal-' . $version . '/* .',
-            'rm -rf ' . $directory . '/drupal-' . $version,
-            $composer.' run-script pre-install-cmd',
-            $composer.' run-script pre-update-cmd',
-            $composer.' install --no-interaction',
-            $composer.' run-script post-install-cmd',
-            $composer.' run-script post-update-cmd',
-        ];
-
-        $process = new Process(implode(' && ', $commands), $directory, null, null, null);
+        array_push($this->commands, $version, $composer);
+        $process = new Process($this->commands, $directory, null, null, null);
 
         if ('\\' !== DIRECTORY_SEPARATOR && file_exists('/dev/tty') && is_readable('/dev/tty')) {
             $process->setTty(true);
@@ -88,6 +96,7 @@ class NewCommand extends Command
         });
 
         $output->writeln('<comment>Application ready! Build something amazing.</comment>');
+        return 0;
     }
 
     /**
